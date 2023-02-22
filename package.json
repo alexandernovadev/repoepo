@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "engines": {
-    "node": "14"
+    "node": "16"
   },
   "scripts": {
     "dev": "NEXT_PUBLIC_CURRENT_SITE=salazarisrael next dev",
