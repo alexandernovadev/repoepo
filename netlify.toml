@@ -1,0 +1,4 @@
+[build.environment]
+  NPM_CONFIG_USERCONFIG = ".npmrc"
+[[plugins]]
+package = "@netlify/plugin-nextjs"

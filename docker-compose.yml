@@ -1,0 +1,22 @@
+version: '3.8'
+services:
+  app:
+    container_name: gac-frontend-core
+    image: nextjs-gac-frontend-core
+    build:
+      args:
+        - NPM_TOKEN=$NPM_TOKEN
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    networks:
+      - network-gac-frontend-core
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+
+networks:
+  network-gac-frontend-core:

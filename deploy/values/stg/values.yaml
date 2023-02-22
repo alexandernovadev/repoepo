@@ -1,0 +1,155 @@
+# Default values for gac
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+node-api:
+  replicaCount: 1
+
+  nameOverride: ''
+  fullnameOverride: 'frontend-core-service'
+
+  image:
+    repository: "462757176550.dkr.ecr.us-east-1.amazonaws.com/frontend-core-service"
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+    command:
+      - node_modules/.bin/next
+      - start
+
+  healthCheckPath: /api/health
+
+  # This value is the time in seconds that will wait the pod to gracefully shutdown
+  #preStopSleepSeconds: 10
+
+  serviceAccount:
+    # Specifies whether a service account should be created
+    create: false
+    # Annotations to add to the service account
+    annotations: {}
+    # The name of the service account to use.
+    # If not set and create is true, a name is generated using the fullname template
+    name: ""
+
+  podAnnotations: {}
+
+  podSecurityContext: {}
+    # fsGroup: 2000
+
+  securityContext: {}
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 1000
+
+  service:
+    type: ClusterIP
+    port: 3000
+
+  ingress:
+    enabled: true
+    redirect_enabled: true
+    annotations: |
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80,"HTTPS": 443}]'
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/group.name: alb-staging
+      alb.ingress.kubernetes.io/load-balancer-attributes: "routing.http2.enabled=true, idle_timeout.timeout_seconds=360"
+      alb.ingress.kubernetes.io/subnets: subnet-020f4a4959a97ef21, subnet-05deec580bfd9efdc, subnet-0cb9d2eaf66e1b35f   
+      alb.ingress.kubernetes.io/wafv2-acl-arn: arn:aws:wafv2:us-east-1:462757176550:regional/webacl/staging/4c4044c8-74cb-444f-abba-87140b5fcd18
+      alb.ingress.kubernetes.io/ssl-redirect: '443'
+    defaultHost: salazarisrael.stg.grupoamericar.com
+    hosts:
+      - host: salazarisrael.stg.grupoamericar.com
+        paths:
+          - /*
+      - host: wigo.stg.grupoamericar.com
+        paths:
+          - /*
+      - host: portillo.stg.grupoamericar.com
+        paths:
+          - /*
+      - host: coseche.stg.grupoamericar.com
+        paths:
+          - /*
+    tls: []
+
+  resources:
+    limits:
+      cpu: 800m
+      memory: 1024Mi
+    requests:
+      cpu: 500m
+      memory: 800Mi
+
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+    # targetMemoryUtilizationPercentage: 80
+
+  cronJobs: []
+  #  - schedule: "* * * * *"
+  #    name: refresh-sessions  
+  #    command: npm run console -- refresh-sessions
+  #    enabledInNamespaces:
+  #      - gac
+  #    resources:
+  #      limits:
+  #        cpu: 100m
+  #        memory: 128Mi
+  #      requests:
+  #        cpu: 100m
+  #        memory: 128Mi
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: purpose
+            operator: In
+            values:
+            - system
+  
+  commonEnvVars: []
+  envVars: []
+
+  vaultSecrets:
+    annotations: {} 
+    enabled: true
+    clusterName: gac-staging
+    secretName:
+      - frontend-service
+    restartDeploy: true
+
+  jobs:
+    items:
+      - enabled: false
+        annotations: {}
+        name: ""
+        backoffLimit: 1
+        containerName: ""
+        activeDeadlineSeconds: 10000
+        # If you don't want to use image defined in global section, change it here       
+        image: {}
+        #  repository: ""
+        #  tag: ""
+        #  pullPolicy: "IfNotPresent"
+        restartPolicy: ""
+        resources: {}
+        args: ""
+        nodeSelector: {}
+        #  node-lifecycle: "normal"    
+        volumeMounts: {}
+        #  name: datamigrations
+        #  mountPath: /home/java/.m2/
+  extraVolumes: {}
+  #  - name: datamigrations
+  #    type: configMap

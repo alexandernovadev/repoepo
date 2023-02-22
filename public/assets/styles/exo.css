@@ -1,0 +1,10 @@
+/** Exo Variable **/
+@font-face {
+  font-family: 'Exo';
+  font-weight: 100 900;
+  font-style: normal;
+  src: url('/assets/fonts/Exo-VF.ttf') format('woff2 supports variations'),
+    url('/assets/fonts/Exo-VF.woff2') format('woff2-variations'),
+    url('/assets/fonts/Exo-VF.woff2') format('woff2');
+  font-display: swap;
+}

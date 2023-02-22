@@ -1,0 +1,25 @@
+repositories:
+  - name: gac
+    url: https://chartmuseum.mgt.grupoamericar.com
+    username: {{ requiredEnv "REPO_USER" | quote }}
+    password: {{ requiredEnv "REPO_PASS" | quote }}
+
+releases:
+  - name: frontend-core-service
+    chart: gac/frontend-core-service
+    version: {{ requiredEnv "HELM_CHART_VERSION" | quote }}
+    namespace: {{ .Environment.Name }}
+    verify: false
+    wait: true
+    #waitForJobs: true
+    timeout: 0
+    values:
+      # Value files passed via --values
+      - values/{{ .Environment.Name }}/values.yaml
+      - node-api:
+          image:
+            tag: {{ requiredEnv "IMAGE_TAG" | quote }}
+          
+environments:
+  stg:
+  prd:

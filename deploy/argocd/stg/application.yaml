@@ -1,0 +1,45 @@
+# Manifest for ArgoCD application CRD
+# Apply this manifest using kubectl only for creating the resource
+#
+# kubectl create -f application.yaml
+#
+# Don't use kubectl apply. This manifest must be created in MGT management
+#
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: stg-frontend-core-service
+  namespace: argocd
+spec:
+# Destination cluster where microservice will be deployed
+  destination:
+    namespace: staging
+    name: gac-staging
+  project: staging
+  # Repo, branch and branch to track
+  source:
+    repoURL: git@bitbucket.org:gac-sa/gac-frontend-core.git
+    targetRevision: "staging"
+    path: "deploy/"
+    plugin:
+      name: helmfile
+      env:
+      # Add chartmuseum repo user and pass
+        - name: REPO_USER
+          value: 
+      # Dummy value. Variable set in bitbucket repository setting
+        - name: REPO_PASS
+          value: 
+      # Add first version of chart    
+        - name: HELM_CHART_VERSION
+          value: "0.0.12"
+      # Add first version of image of you application
+        - name: IMAGE_TAG
+          value: "staging"
+      # Add environment to get values. Can be stg or prd
+        - name: ENV
+          value: "stg"
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=true

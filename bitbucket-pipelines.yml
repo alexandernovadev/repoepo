@@ -1,0 +1,250 @@
+image: node:14-alpine3.15
+
+options:
+  docker: true
+  size: 2x
+
+definitions:
+  caches:
+    nextcache: .next/cache
+
+  steps:
+    - step: &lint-test
+        name: Lint, Test
+        caches:
+          - nextcache
+          - node
+        script:
+          - apk update
+          - yarn install
+          - yarn lint
+          - yarn types
+
+    - step: &update-patch-version
+        name: Update patch version
+        script:
+          - apk update
+          - apk add git
+          - npm version --no-commit-hooks patch -m "Update to v%s [skip ci]"
+        artifacts:
+          - package.json
+          - .git/**
+
+    - step: &update-minor-version
+        name: Update minor version
+        script:
+          - apk update
+          - apk add git
+          - npm version --no-commit-hooks minor -m "Update to v%s [skip ci]"
+        artifacts:
+          - package.json
+          - .git/**
+
+    - step: &update-major-version
+        name: Update major version
+        script:
+          - apk update
+          - apk add git
+          - npm version --no-commit-hooks major -m "Update to v%s [skip ci]"
+        artifacts:
+          - package.json
+          - .git/**
+
+    - step: &set-env-vars
+        name: Set environment variables
+        caches:
+          - nextcache
+        script:
+          - apk update
+          - apk add --no-cache vault libcap jq
+          - setcap cap_ipc_lock= /usr/sbin/vault
+          - vault login -method=userpass username=${VAULT_USERNAME} password=${VAULT_PASSWORD}
+          - vault kv get -format=json ${VAULT_PATH} | jq '.data.data' > env.json
+          - jq -r 'to_entries|map("export \(.key)=\(.value|tostring)")|.[]' env.json >> env.sh
+          - jq -r 'to_entries|map("\(.key)=\(.value|tostring)")|.[]' env.json >> .env
+          - echo "export ENV=$ENV" >> env.sh
+          - echo "export ARGOCD_APPNAME=$ARGOCD_APPNAME" >> env.sh
+          - echo "export HELM_CHART_VERSION=$HELM_CHART_VERSION" >> env.sh
+        artifacts:
+          - env.sh
+          - .env
+
+    - step: &push-new-version
+        name: Push new package version
+        script:
+          - apk update
+          - apk add git
+          - apk --no-cache add openssh
+          - echo $GAC_PRIVATE_KEY > ~/.ssh/id_rsa.tmp
+          - base64 -d ~/.ssh/id_rsa.tmp > ~/.ssh/id_rsa
+          - chmod 600 ~/.ssh/id_rsa
+          - git push $BITBUCKET_GIT_SSH_ORIGIN $BITBUCKET_BRANCH --tags --no-verify
+
+    - step: &push-last-commit-to-dev
+        name: Push last commit to develop branch
+        script:
+          - apk update
+          - apk add git
+          - apk --no-cache add openssh
+          - echo ${GAC_PRIVATE_KEY} > ~/.ssh/id_rsa.tmp
+          - base64 -d ~/.ssh/id_rsa.tmp > ~/.ssh/id_rsa
+          - chmod 600 ~/.ssh/id_rsa
+          - DEV_BRANCH="${BITBUCKET_DEV_BRANCH:-develop}"
+          - git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+          - git fetch --all
+          - git checkout ${DEV_BRANCH}
+          - git rebase ${BITBUCKET_BRANCH}
+          - git push $BITBUCKET_GIT_SSH_ORIGIN ${DEV_BRANCH} --force --no-verify
+
+    - step: &update-and-build-stg
+        name: Build a new version
+        caches:
+          - nextcache
+          - node
+        script:
+          - apk update
+          - source env.sh
+          - yarn install
+          - yarn run build
+          - NEW_VERSION=$(node -p "require('./package.json').version")
+          - echo "export IMAGE_VERSION=${NEW_VERSION}-alpha" >> env.sh
+        artifacts:
+          - env.sh
+          - package.json
+          - dist/**
+          - node_modules/**
+
+    - step: &update-and-build-prod
+        name: Build a new version
+        caches:
+          - nextcache
+          - node
+        script:
+          - apk update
+          - source env.sh
+          - yarn install
+          - yarn run build
+          - NEW_VERSION=$(node -p "require('./package.json').version")
+          - echo "export IMAGE_VERSION=$NEW_VERSION" >> env.sh
+        artifacts:
+          - env.sh
+          - package.json
+          - dist/**
+
+    - step: &publish-image
+        name: Publish Docker image
+        caches:
+          #- docker DO NOT use docker cache. Image size is over 1GB and it will compress it just to not push it later
+          - nextcache
+        services:
+          - docker
+        size: 2x # Double resources available for this step.
+        image: amazon/aws-cli:2.3.0
+        script:
+          - source env.sh
+          - export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID_STG
+          - export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY_STG
+          - export AWS_ACCOUNT_ID=$AWS_ACCOUNT_ID_STG
+          - DOCKER_REGISTRY=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${SERVICE_SLUG}
+          - echo "Publishing image ${DOCKER_REGISTRY}:${IMAGE_VERSION}"
+          - docker build -t ${DOCKER_REGISTRY}:${IMAGE_VERSION} --build-arg NPM_TOKEN=${NPM_TOKEN} .
+          - aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${DOCKER_REGISTRY}
+          - docker push ${DOCKER_REGISTRY}:${IMAGE_VERSION}
+        artifacts:
+          - env.sh
+          - .env
+
+    - step: &deploy
+        name: Deploy on Kubernetes
+        image: craftech/ci-tools:kube-tools-latest
+        script:
+          - source env.sh
+          - argocd login $ARGOCD_DOMAIN_PORT --username $ARGOCD_USERNAME --password $ARGOCD_PASSWORD
+          - argocd app set $ARGOCD_APPNAME --plugin-env IMAGE_TAG=${IMAGE_VERSION} --plugin-env HELM_CHART_VERSION=${HELM_CHART_VERSION} --plugin-env ENV=${ENV}
+        artifacts:
+          - env.sh
+
+  services:
+    docker:
+      memory: 4096
+
+pipelines:
+  pull-requests:
+    '**': # this runs as default for any branch not elsewhere defined
+      - step: *lint-test
+
+  branches: # pipelines that run automatically on a commit to a branch
+    develop:
+      - step: *lint-test
+
+    staging:
+      - step: *lint-test
+      - step:
+          <<: *set-env-vars
+          deployment: staging
+      - step: *update-minor-version
+      - step: *push-new-version
+      - step: *push-last-commit-to-dev
+      - step: *update-and-build-stg
+      - step: *publish-image
+      - step:
+          <<: *deploy
+          name: Deploy Staging
+
+    master:
+      - step: *lint-test
+      - step:
+          <<: *set-env-vars
+          deployment: production
+      - step: *update-and-build-prod
+      - step: *publish-image
+      - step:
+          <<: *deploy
+          name: Deploy production
+
+    hotfix/*: # any branch with a hotfix prefix
+      - step: *lint-test
+      - step: *update-patch-version
+      - step: *push-new-version
+
+  custom: # pipelines that can only be triggered manually
+    push-major-version:
+      - step: *lint-test
+      - step: *update-major-version
+      - step: *push-new-version
+
+    push-minor-version:
+      - step: *lint-test
+      - step: *update-minor-version
+      - step: *push-new-version
+
+    push-patch-version:
+      - step: *lint-test
+      - step: *update-patch-version
+      - step: *push-new-version
+
+    push-last-commit-to-dev:
+      - step: *lint-test
+      - step: *push-last-commit-to-dev
+
+    deploy-staging:
+      - step: *lint-test
+      - step:
+          <<: *set-env-vars
+          deployment: staging
+      - step: *update-and-build-stg
+      - step: *publish-image
+      - step:
+          <<: *deploy
+          name: Deploy Staging
+
+    deploy-production:
+      - step: *lint-test
+      - step:
+          <<: *set-env-vars
+          deployment: production
+      - step: *update-and-build-prod
+      - step: *publish-image
+      - step:
+          <<: *deploy
+          name: Deploy production

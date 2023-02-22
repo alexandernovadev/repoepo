@@ -1,0 +1,116 @@
+/** Louis Variable **/
+
+@font-face {
+  font-family: 'Louis';
+  font-weight: 700;
+  font-style: normal;
+  src: url('/assets/fonts/Louis-Bold.ttf');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Louis';
+  font-weight: 700;
+  font-style: italic;
+  src: url('/assets/fonts/Louis-BoldItalic.ttf');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Louis-Condensed';
+  font-weight: 600;
+  font-style: normal;
+  src: url('/assets/fonts/Louis-CondensedDemi.ttf');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Louis-Condensed';
+  font-weight: 400;
+  font-style: normal;
+  src: url('/assets/fonts/Louis-CondensedRegular.ttf');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Louis';
+  font-weight: 400;
+  font-style: italic;
+  src: url('/assets/fonts/Louis-Italic.ttf');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Louis';
+  font-weight: 400;
+  font-style: normal;
+  src: url('/assets/fonts/Louis-Regular.ttf');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Louis-Global';
+  font-weight: 700;
+  font-style: normal;
+  src: url('/assets/fonts/LouisGlobal2-Bold.otf');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Louis-Global';
+  font-weight: 700;
+  font-style: italic;
+  src: url('/assets/fonts/LouisGlobal2-BoldItalic.otf');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Louis-Global';
+  font-weight: 600;
+  font-style: normal;
+  src: url('/assets/fonts/LouisGlobal2-CondensedDemi.otf');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Louis-Global';
+  font-weight: 400;
+  font-style: normal;
+  src: url('/assets/fonts/LouisGlobal2-CondensedReg.otf');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Louis-Global';
+  font-weight: 900;
+  font-style: normal;
+  src: url('/assets/fonts/LouisGlobal2-Heavy.otf');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Louis-Global';
+  font-weight: 900;
+  font-style: italic;
+  src: url('/assets/fonts/LouisGlobal2-HeavyItalic.otf');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Louis-Global';
+  font-weight: 400;
+  font-style: italic;
+  src: url('/assets/fonts/LouisGlobal2-Italic.otf');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Louis-Global';
+  font-weight: 400;
+  font-style: normal;
+  src: url('/assets/fonts/LouisGlobal2-Reg.otf');
+  font-display: swap;
+}
+
+
+

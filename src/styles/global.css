@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: #fafafa;
+}
+
+.hide-scrollbar ::-webkit-scrollbar {
+  display: none;
+}
+
+/* Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.grecaptcha-badge {
+  visibility: hidden;
+}
+
+.bodyContainer {
+  margin-top: 48px;
+}
+
+.bodyContainerOffline {
+  margin-top: 104px;
+}
+
+@screen sm {
+  .bodyContainer {
+    margin-top: 56px;
+  }
+
+  .bodyContainerOffline {
+    margin-top: 112px;
+  }
+}
+
+@screen md {
+  .bodyContainer {
+    margin-top: 64px;
+  }
+
+  .bodyContainerOffline {
+    margin-top: 120px;
+  }
+}
+
+@screen lg {
+  .bodyContainer {
+    margin-top: 0;
+  }
+
+  .bodyContainerOffline {
+    margin-top: 0;
+  }
+}
+
+@media (min-width: 884px) {
+  .steps-positioning {
+    align-self: auto;
+    width: auto;
+  }
+}
+
+@layer utilities {
+  .scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar::-webkit-scrollbar-track {
+    border-radius: 100vh;
+    background: #f3f4f6;
+  }
+
+  .scrollbar::-webkit-scrollbar-thumb {
+    background: #cccccc;
+    border-radius: 100vh;
+    border: 0px solid #ffffff;
+  }
+
+  .scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+  }
+}
